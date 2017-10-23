@@ -1,0 +1,33 @@
+{
+  "name": "fsociety",
+  "version": "1.0.0",
+  "description": "![](https://cdn.awsli.com.br/600x450/61/61161/produto/13662342/66cd8995d4.jpg)",
+  "main": "index.js",
+  "scripts": {
+    "dev": "NODE_ENV=dev webpack",
+    "prod": "webpack",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BenjaminRochez/fsociety.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/BenjaminRochez/fsociety/issues"
+  },
+  "homepage": "https://github.com/BenjaminRochez/fsociety#readme",
+  "devDependencies": {
+    "babel-core": "^6.26.0",
+    "babel-loader": "^7.1.2",
+    "babel-preset-env": "^1.6.1",
+    "browser-sync": "^2.18.13",
+    "browser-sync-webpack-plugin": "^1.2.0",
+    "uglifyjs-webpack-plugin": "^1.0.0-rc.0",
+    "webpack": "^3.8.1"
+  },
+  "dependencies": {
+    "jquery": "^3.2.1"
+  }
+}
