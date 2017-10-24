@@ -8,7 +8,8 @@ let config = {
     watch: true,
     output: {
         path: path.resolve('./js/dist'),
-        filename: 'bundle.js'
+        filename: 'bundle.js',
+        publicPath: 'js/dist/'
     },
     devtool: dev ? "cheap-module-eval-source-map" : "source-map",
     module: {
