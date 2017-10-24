@@ -1,5 +1,6 @@
 let a = "Salut les gens"
 
+import css from '../../css/app.scss';
 
 document.getElementById('button').addEventListener('click', function() {
    //jQuery ici
