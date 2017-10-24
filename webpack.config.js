@@ -1,17 +1,38 @@
 const path = require('path')
-const BrowserSyncPlugin = require('browser-sync-webpack-plugin')
 const UglifyJSPlugin = require('uglifyjs-webpack-plugin')
+const ExtractTextPlugin = require("extract-text-webpack-plugin")
+
 const dev = process.env.NODE_ENV === "dev"
 
+
+let cssLoaders = [
+    {loader: 'css-loader', options: {importLoaders: 1, minimize: !dev}}
+]
+
+
+if (!dev) {
+    cssLoaders.push({
+        loader: 'postcss-loader', options: {
+            plugins: (loader) => [
+            require('autoprefixer')({
+                browsers: ['last 2 versions', 'ie > 8']
+            }),
+        ]
+    }
+    })
+}
+
 let config = {
-    entry: './js/dev/app.js',
+    entry: {
+        app: './js/dev/app.js'
+    },
     watch: true,
     output: {
         path: path.resolve('./js/dist'),
-        filename: 'bundle.js',
+        filename: '[name].js',
         publicPath: 'js/dist/'
     },
-    devtool: dev ? "cheap-module-eval-source-map" : "source-map",
+    devtool: dev ? "cheap-module-eval-source-map" : false,
     module: {
         rules: [
             {
@@ -21,37 +42,36 @@ let config = {
             },
             {
                 test: /\.css$/,
-                use:['style-loader', 'css-loader']
+                use: ExtractTextPlugin.extract({
+                    fallback: "style-loader",
+                    use: [...cssLoaders]
+                })
             },
             {
                 test: /\.scss$/,
-                use: [
-                    'style-loader',
-                    { loader: 'css-loader', options: {importLoaders: 1}},
-                    { loader: 'postcss-loader', options: {
-                        plugins: (loader) => [
-                            require('autoprefixer')({
-                                browsers: ['last 2 versions', 'ie > 8']
+                use: ExtractTextPlugin.extract({
+                    fallback: "style-loader",
+                    use: [...cssLoaders, 'sass-loader']
+                })
 
-                    }),
-                        ]
-                        }
-                    },
-                    'sass-loader'
-                ]
             }
         ]
-    }
+    },
+    plugins: [
+        new ExtractTextPlugin({
+            filename:  (getPath) => {
+      return getPath('../../css/[name].css').replace('css/js', 'css');
+    },
+            disable: dev
+        })
+    ]
 }
 
-if(!dev){
-    config.plugins.push(new  UglifyJSPlugin({
-        sourceMap: true
+if (!dev) {
+    config.plugins.push(new UglifyJSPlugin({
+        sourceMap: false
     }))
 }
-
-
-
 
 
 module.exports = config
