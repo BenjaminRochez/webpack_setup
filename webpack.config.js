@@ -1,77 +1,133 @@
 const path = require('path')
-const UglifyJSPlugin = require('uglifyjs-webpack-plugin')
-const ExtractTextPlugin = require("extract-text-webpack-plugin")
+const webpack = require('webpack')
 
-const dev = process.env.NODE_ENV === "dev"
+const { CleanWebpackPlugin } = require('clean-webpack-plugin')
+const CopyWebpackPlugin = require('copy-webpack-plugin')
+const MiniCssExtractPlugin = require('mini-css-extract-plugin')
+const ImageMinimizerPlugin = require('image-minimizer-webpack-plugin')
+const TerserPlugin = require('terser-webpack-plugin')
 
+const IS_DEVELOPMENT = process.env.NODE_ENV === 'dev'
 
-let cssLoaders = [
-    {loader: 'css-loader', options: {importLoaders: 1, minimize: !dev}}
-]
+const dirApp = path.join(__dirname, 'app')
+const dirShared = path.join(__dirname, 'shared')
+const dirStyles = path.join(__dirname, 'styles')
+const dirNode = 'node_modules'
 
+console.log(dirApp, dirShared, dirStyles)
 
-if (!dev) {
-    cssLoaders.push({
-        loader: 'postcss-loader', options: {
-            plugins: (loader) => [
-            require('autoprefixer')({
-                browsers: ['last 2 versions', 'ie > 8']
-            }),
-        ]
-    }
-    })
-}
+module.exports = {
+  entry: [
+    path.join(dirApp, 'index.js'),
+    path.join(dirStyles, 'index.scss')
 
-let config = {
-    entry: {
-        app: './js/dev/app.js'
-    },
-    watch: true,
-    output: {
-        path: path.resolve('./js/dist'),
-        filename: '[name].js',
-        publicPath: 'js/dist/'
-    },
-    devtool: dev ? "cheap-module-eval-source-map" : false,
-    module: {
-        rules: [
-            {
-                test: /\.js$/,
-                exclude: /(node_modules|bower_components)/,
-                use: ['babel-loader']
-            },
-            {
-                test: /\.css$/,
-                use: ExtractTextPlugin.extract({
-                    fallback: "style-loader",
-                    use: [...cssLoaders]
-                })
-            },
-            {
-                test: /\.scss$/,
-                use: ExtractTextPlugin.extract({
-                    fallback: "style-loader",
-                    use: [...cssLoaders, 'sass-loader']
-                })
-
-            }
-        ]
-    },
-    plugins: [
-        new ExtractTextPlugin({
-            filename:  (getPath) => {
-      return getPath('../../css/[name].css').replace('css/js', 'css');
-    },
-            disable: dev
-        })
+  ],
+  resolve: {
+    modules: [
+      dirApp,
+      dirShared,
+      dirStyles,
+      dirNode
     ]
+  },
+  plugins: [
+    new webpack.DefinePlugin({
+      IS_DEVELOPMENT
+    }),
+    new CopyWebpackPlugin({
+      patterns: [
+        {
+          from: './shared',
+          to: ''
+        }
+      ]
+    }),
+
+    new MiniCssExtractPlugin({
+      filename: '[name].css',
+      chunkFilename: '[id].css'
+    }),
+
+    new ImageMinimizerPlugin({
+      minimizerOptions: {
+        plugins: [
+          ['gifsicle', { interlaced: true }],
+          ['jpegtran', { progressive: true }],
+          ['optipng', { optimizationLevel: 5 }]
+        ]
+      }
+    }),
+
+    new CleanWebpackPlugin()
+  ],
+
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        use: {
+          loader: 'babel-loader'
+        }
+      },
+
+      {
+        test: /\.(sa|sc|c)ss$/,
+        use: [
+          {
+            loader: MiniCssExtractPlugin.loader,
+            options: {
+              publicPath: ''
+            }
+          },
+          {
+            loader: 'css-loader'
+          },
+          {
+            loader: 'postcss-loader'
+          },
+          {
+            loader: 'sass-loader'
+          }
+        ]
+      },
+      {
+        test: /\.(jpe?g|png|gif|svg|woff2?|fnt|webp)$/,
+        loader: 'file-loader',
+        options: {
+          // outputPath: 'images',
+          name (file) {
+            return '[hash].[ext]'
+          }
+        }
+      },
+      {
+        test: /\.(jpe?g|png|gif|svg|webp)$/i,
+        use: [
+          {
+            loader: ImageMinimizerPlugin.loader,
+            options: {
+              severityError: 'warning', // Ignore errors on corrupted images
+              minimizerOptions: {
+                plugins: ['gifsicle']
+              }
+            }
+          }
+        ]
+      },
+      {
+        test: /\.(glsl|frag|vert)$/,
+        loader: 'raw-loader',
+        exclude: /node_modules/
+      },
+      {
+        test: /\.(glsl|frag|vert)$/,
+        loader: 'glslify-loader',
+        exclude: /node_modules/
+      }
+    ]
+  },
+  optimization: {
+    minimize: true,
+    minimizer: [new TerserPlugin()]
+  }
 }
-
-if (!dev) {
-    config.plugins.push(new UglifyJSPlugin({
-        sourceMap: false
-    }))
-}
-
-
-module.exports = config
